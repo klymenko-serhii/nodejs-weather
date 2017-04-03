@@ -1,0 +1,204 @@
+swagger: "2.0"
+info:
+  version: "0.0.1"
+  title: Hello World App
+# during dev, should point to your local machine
+host: localhost:10010
+# basePath prefixes all resource paths 
+basePath: /
+# 
+schemes:
+  # tip: remove http to make production-grade
+  - http
+  - https
+# format of bodies a client can send (Content-Type)
+consumes:
+  - application/json
+  - application/octet-stream
+# format of the responses to the client (Accepts)
+produces:
+  - application/json
+  - application/octet-stream
+securityDefinitions:
+  UserSecurity:
+    type: apiKey
+    in: header
+    name: Authorization
+paths:
+  /weather:
+    x-swagger-router-controller: weather
+    get:
+      security:
+        - UserSecurity: [] 
+      description: "Returns weather in the specified cities by user, retun empty object if user have not set cities. \n\n https://developer.yahoo.com/weather/ - for weather response schemes"
+      operationId: getWeatherByCity
+      responses:
+        "200":
+          description: Success
+          schema:
+            # a pointer to a definition
+            $ref: "#/definitions/WeatherResponse"
+        403:
+          description: Bad token
+          schema: {
+            "$ref": "#/definitions/ErrorResponse"
+          }
+    post:
+      security:
+        - UserSecurity: [] 
+      summary: Append city
+      description: Append city to user
+      operationId: addCity
+      parameters:
+        - name: city
+          in: query
+          description: "The city you want append to user"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: OK
+          schema: {
+            "$ref": "#/definitions/OkResponse"
+          }
+        403:
+          description: Bad token
+          schema: {
+            "$ref": "#/definitions/ErrorResponse"
+          }
+    delete:
+      security:
+        - UserSecurity: [] 
+      summary: Remove city
+      description: Remove city from user set
+      operationId: removeCity
+      parameters:
+        - name: city
+          in: query
+          description: "The city you want to remove"
+          required: true
+          type: "string"
+      responses:
+        200:
+          description: OK
+          schema: {
+            "$ref": "#/definitions/OkResponse"
+          }
+        403:
+          description: Bad token
+          schema: {
+            "$ref": "#/definitions/ErrorResponse"
+          }
+    
+  /signup:
+    x-swagger-router-controller: signup
+    post:
+      summary: Create user
+      description: Create user by username and password
+      operationId: createUser
+      parameters:
+        - in: body
+          name: user
+          description: The user to create.
+          schema:
+            type: object
+            required:
+              - username
+              - password
+            properties:
+              username:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: OK
+          schema: {
+            "$ref": "#/definitions/UserResponse"
+          }
+        400:
+          description: User with same `username` already exist
+          schema: {
+            "$ref": "#/definitions/ErrorResponse"
+          }
+  /signin:
+    x-swagger-router-controller: signin
+    put:
+      summary: Login user
+      description: Login user by credentials
+      operationId: signin
+      parameters:
+        - in: body
+          name: user
+          description: The user credentials
+          schema:
+            type: object
+            required:
+              - username
+              - password
+            properties:
+              username:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: OK
+          schema: {
+            "$ref": "#/definitions/AuthResponse"
+          }
+        400:
+          description: Bad 
+          schema: {
+            "$ref": "#/definitions/ErrorResponse"
+          }
+  /swagger:
+    x-swagger-pipe: swagger_raw
+# complex objects have schema definitions
+definitions:
+  OkResponse:
+    required:
+      - success
+    properties:
+      success:
+        type: boolean
+  AuthResponse:
+    required:
+      - success
+    properties:
+      success:
+        type: boolean
+      token:
+        type: string
+  ErrorResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
+  WeatherResponse:
+    required:
+     - success
+    properties:
+      success:
+        type: boolean
+      results:
+        type: object
+  UserResponse:
+    required:
+     - success
+    properties:
+      success:
+        type: boolean
+      user:
+        $ref: "#/definitions/UserObject"
+  UserObject:
+    type: object
+    properties:
+      _id:
+        type: string
+      username: 
+        type: string
+    required:
+      - username
+      - _id
